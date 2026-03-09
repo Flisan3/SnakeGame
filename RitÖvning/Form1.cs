@@ -22,11 +22,14 @@ namespace RitÖvning
 
         float SnakeXAxel = 150;
         float SnakeYAxel = 120;
+        float xAutoAction = 0;
+        float yAutoAction = 0;
         float xAuto = 0;
         float yAuto = 0;
         float FoodXAxel = 300;
         float FoodYAxel = 120;
         int Score = 0;
+        int FoodDebug = 0;
 
         public Form1()
         {
@@ -50,7 +53,11 @@ namespace RitÖvning
 
         private void Form1_Load(object sender, EventArgs e) 
         {
-
+            this.DoubleBuffered = true;
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint |
+                          ControlStyles.UserPaint |
+                          ControlStyles.OptimizedDoubleBuffer, true);
+            this.UpdateStyles();
         }
 
         protected override void OnPaint(PaintEventArgs draw)
@@ -68,6 +75,9 @@ namespace RitÖvning
 
         private void timer1_Tick(object sender, EventArgs e)
         {
+            xAuto = xAutoAction;
+            yAuto = yAutoAction;
+
             //Spåra positionen av det sista segmentet innan det flyttas, så att vi kan lägga till ett nytt segment där när ormen växer
             PointF lastTail = snake[snake.Count - 1];
 
@@ -89,6 +99,8 @@ namespace RitÖvning
                 GrowSnake(lastTail);
                 SpawnFood();
             }
+
+            Refresh();
 
             //Kolla om ormen har krockat med väggarna eller sig själv
             if (snake[0].X >= 540 || snake[0].X < 0 || snake[0].Y >= 300 || snake[0].Y < 0 || SnakeHitsItself())
@@ -123,6 +135,12 @@ namespace RitÖvning
 
             }
 
+            if (Score > 179)
+            {
+                timer1.Stop();
+                MessageBox.Show("Congratulations! You have reached the maximum score of 180!", "Snake", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
             Refresh();
         }
 
@@ -132,23 +150,23 @@ namespace RitÖvning
 
             if ((e.KeyCode == Keys.A || e.KeyCode == Keys.Left) && xAuto != 30)
             {
-                xAuto = -30;
-                yAuto = 0;
+                xAutoAction = -30;
+                yAutoAction = 0;
             }
             else if ((e.KeyCode == Keys.D || e.KeyCode == Keys.Right) && xAuto != -30)
             {
-                xAuto = 30;
-                yAuto = 0;
+                xAutoAction = 30;
+                yAutoAction = 0;
             }
             else if ((e.KeyCode == Keys.W || e.KeyCode == Keys.Up) && yAuto != 30)
             {
-                xAuto = 0;
-                yAuto = -30;
+                xAutoAction = 0;
+                yAutoAction = -30;
             }
             else if ((e.KeyCode == Keys.S || e.KeyCode == Keys.Down) && yAuto != -30)
             {
-                xAuto = 0;
-                yAuto = 30;
+                xAutoAction = 0;
+                yAutoAction = 30;
             }
 
             e.SuppressKeyPress = true;
@@ -165,9 +183,22 @@ namespace RitÖvning
         {
             //Generera en slumpmässig position för maten inom spelområdet
             Random random = new Random();
-            FoodXAxel = random.Next(0, 18) * 30;
-            FoodYAxel = random.Next(0, 10) * 30;
+
+            while (FoodDebug == 0)
+            {
+                FoodXAxel = random.Next(0, 18) * 30;
+                FoodYAxel = random.Next(0, 10) * 30;
+
+                //Kolla så att maten inte spawnar på ormen
+                bool onSnake = snake.Any(segment => segment.X == FoodXAxel && segment.Y == FoodYAxel);
+
+                if (!onSnake)
+                {
+                    FoodDebug = 1;
+                }
+            }
             //Höj poängen och uppdatera labeln
+            FoodDebug = 0;
             label1.Text = "Score: " + ++Score;
         }
 
@@ -179,6 +210,8 @@ namespace RitÖvning
 
             xAuto = 0;
             yAuto = 0;
+            xAutoAction = 0;
+            yAutoAction = 0;
 
             FoodXAxel = 300;
             FoodYAxel = 120;
@@ -205,11 +238,6 @@ namespace RitÖvning
             }
 
             return false;
-        }
-
-        private void label1_Click(object sender, EventArgs e)
-        {
-
         }
     }
 }
